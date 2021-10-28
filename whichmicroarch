@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# See https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+
+# osfxsr to fxsr
+# sce to syscall
+x8664v[1]="cmov cx8 fpu fxsr mmx syscall sse sse2"
+
+# cmpxchg16b to cx16
+# lahf-sahf to lahf_lm
+# sse3 to ssse3
+x8664v[2]="cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3"
+
+# lzcnt to abm
+# osxsave to xsave
+x8664v[3]="avx avx2 bmi1 bmi2 f16c fma abm movbe xsave"
+
+x8664v[4]="avx512f avx512bw avx512cd avx512dq avx512vl"
+
+cpuflags="$(cat /proc/cpuinfo | grep ^flags | sed -e 's/.*: //g' -e 's: :\n:g' | sort -u)"
+
+for i in $(seq 1 4); do
+	out=$(comm -13 <(echo "$cpuflags") <(echo "${x8664v[$i]}" | sed -e 's: :\n:g' | sort))
+	if [ -z "$out" ]; then
+		echo x8664v$i supported
+	else
+		echo x8664v$i not supported, $out missing
+	fi
+done
